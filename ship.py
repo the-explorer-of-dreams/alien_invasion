@@ -28,10 +28,15 @@ class Ship:
         self.start_up = False
         self.screen_rect = screen.get_rect()
 
-
         # 将飞船放到屏幕底部中央
         self.rect.centerx = self.screen_rect.centerx
         self.rect.bottom = self.screen_rect.bottom
+
+        # 设置飞船的移动标志
+        self.moving_right = False
+        self.moving_left = False
+        self.moving_forward = False
+        self.moving_backward = False
 
     def blitme(self):
         """在指定位置绘制飞船"""
@@ -52,3 +57,13 @@ class Ship:
         self.start_up = True
         return move_step
 
+    def update(self):
+        """根据移动标志调整飞船位置"""
+        if self.moving_right:
+            self.rect.centerx += 1
+        if self.moving_left:
+            self.rect.centerx += -1
+        if self.moving_forward:
+            self.rect.centery += -1
+        if self.moving_backward:
+            self.rect.centery += 1

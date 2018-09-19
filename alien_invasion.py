@@ -19,6 +19,8 @@ import pygame
 
 from settings import Settings
 from ship import Ship
+import game_functions as gf
+
 
 
 class AlienInvasion:
@@ -33,17 +35,12 @@ class AlienInvasion:
 
         # 创建一艘飞船
         ship = Ship(screen)
-        move_step = 1
+        # move_step = 1
         # 开始游戏主循环
         while True:
-            for event in pygame.event.get():
-                # print(event.type)
-                if event.type == pygame.QUIT:
-                    sys.exit()
-
-            screen.fill(ai_settings.background_color)
-            move_step = ship.ship_move(move_step)
-            ship.blitme()
+            gf.check_events(ship)
+            ship.update()
+            gf.update_screen(ai_settings, screen, ship)
             # time.sleep(1)
 
             pygame.display.flip()

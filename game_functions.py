@@ -6,8 +6,6 @@ import sys
 import pygame
 
 
-
-
 def check_keydown_events(event, ship):
     """响应按键"""
     if event.key == pygame.K_RIGHT:

@@ -20,7 +20,7 @@ import pygame
 from settings import Settings
 from ship import Ship
 import game_functions as gf
-
+from pygame.sprite import Group
 
 
 class AlienInvasion:
@@ -35,12 +35,15 @@ class AlienInvasion:
 
         # 创建一艘飞船
         ship = Ship(screen)
-        # move_step = 1
+        # 创建一个用于存储所有子弹的编组
+        bullets = Group()
+
         # 开始游戏主循环
         while True:
-            gf.check_events(ship)
+            gf.check_events(ai_settings, screen, ship, bullets)
             ship.update()
-            gf.update_screen(ai_settings, screen, ship)
+            gf.update_bullets(bullets)
+            gf.update_screen(ai_settings, screen, ship, bullets)
             # time.sleep(1)
 
             pygame.display.flip()

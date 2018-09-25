@@ -27,6 +27,7 @@ def check_keydown_events(event, ai_settings, screen, ship, bullets):
     elif event.key == pygame.K_q:
         sys.exit()
 
+
 def check_keyup_events(event, ship):
     """响应松开"""
     if event.key == pygame.K_RIGHT:
@@ -112,12 +113,13 @@ def get_number_rows(ai_settings, alien, ship):
 def create_fleet(ai_settings, screen, ship, aliens):
     """创建外星人群"""
     # 获取外星人的宽度
-    # 计算可容纳的外星人个数
     alien = Alien(ai_settings, screen)
+    # 计算可容纳的外星人个数
     alien_width, number_aliens_x = get_number_aliens_x(ai_settings, alien)
+    # 获取外星人行数
     number_rows = get_number_rows(ai_settings, alien, ship)
 
-    # 创建第一行外星人
+    # 创建外星人
     for row_number in range(number_rows):
         for alien_number in range(number_aliens_x):
             create_alien(ai_settings, screen, aliens, alien_width, row_number, alien_number)

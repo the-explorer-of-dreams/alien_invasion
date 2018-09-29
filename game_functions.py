@@ -83,7 +83,7 @@ def check_events(ai_settings, screen, stats, play_button, ship, aliens, bullets)
             check_keyup_events(event, ship)
 
 
-def update_screen(ai_settings, stats, screen, ship, aliens, bullets, play_button):
+def update_screen(ai_settings, stats, score_board, screen, ship, aliens, bullets, play_button):
     """更新屏幕上的图像，并切换到新屏幕"""
     # 每次循环时更新屏幕
     screen.fill(ai_settings.background_color)
@@ -92,6 +92,7 @@ def update_screen(ai_settings, stats, screen, ship, aliens, bullets, play_button
         bullet.draw_bullet()
     ship.blitme()
     aliens.draw(screen)
+    score_board.show_score()
     if not stats.game_active:
         play_button.draw_button()
 

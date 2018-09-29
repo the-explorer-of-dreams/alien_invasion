@@ -81,3 +81,8 @@ class Ship:
 
         self.rect.centerx = self.centerx
         self.rect.centery = self.centery
+
+    def center_ship(self):
+        """让飞船居中"""
+        self.centerx = self.screen_rect.centerx
+        self.centery = self.screen_rect.bottom - self.half_length

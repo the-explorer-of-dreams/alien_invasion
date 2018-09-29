@@ -23,7 +23,7 @@ import game_functions as gf
 from pygame.sprite import Group
 from alien import Alien
 from game_stats import GameStats
-
+from button import Button
 
 class AlienInvasion:
     """ Alien Invasion game main class"""
@@ -35,6 +35,9 @@ class AlienInvasion:
         ai_settings = Settings()
         stats = GameStats(ai_settings)
         screen = pygame.display.set_mode((ai_settings.screen_width, ai_settings.screen_height))
+
+        # 创建play按钮
+        play_button = Button(ai_settings, screen, "play")
 
         # 创建一艘飞船
         ship = Ship(screen)
@@ -50,11 +53,12 @@ class AlienInvasion:
 
         # 开始游戏主循环
         while True:
-            gf.check_events(ai_settings, screen, ship, bullets)
-            ship.update()
-            gf.update_bullets(ai_settings, screen, ship, bullets, aliens)
-            gf.update_aliens(ai_settings, stats, screen, ship, bullets, aliens)
-            gf.update_screen(ai_settings, screen, ship, aliens, bullets)
+            gf.check_events(ai_settings, screen, stats, play_button,  ship, aliens, bullets)
+            if stats.game_active:
+                ship.update()
+                gf.update_bullets(ai_settings, screen, ship, bullets, aliens)
+                gf.update_aliens(ai_settings, stats, screen, ship, bullets, aliens)
+            gf.update_screen(ai_settings, stats, screen, ship, aliens, bullets, play_button)
             # time.sleep(1)
 
             pygame.display.flip()

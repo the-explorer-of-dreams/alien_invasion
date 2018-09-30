@@ -28,18 +28,23 @@ class Settings:
         self.ship_limit = 3
 
         # 子弹设置
-        self.bullet_width = 300
+        self.bullet_width = 800
         self.bullet_height = 12
         self.bullet_color = (90, 90, 90)
         self.bullets_allowed = 3
 
         # 外星人设置
         self.fleet_drop_speed = 80
-
+        self.score_scale = 1.5
 
         # 加快游戏节奏的速度因子
         self.speedup_scale = 1.1
         self.initialize_dynamic_settings()
+
+        # 配置文件路径
+        self.ini_filename = 'config/alien_invasion.ini'
+
+
 
     def initialize_dynamic_settings(self):
         """初始化随游戏进行而变化的设置"""
@@ -50,8 +55,14 @@ class Settings:
         # fleet_direction为1表示向右移，-1表示向左移
         self.fleet_direction = 1
 
+        # 记分
+        self.alien_points = 50
+
     def increase_speed(self):
         """提高速度设置"""
         self.ship_speed_factor *= self.speedup_scale
         self.bullet_speed_factor *= self.speedup_scale
         self.alien_speed_factor *= self.speedup_scale
+        self.alien_points = int(self.alien_points * self.score_scale)
+
+

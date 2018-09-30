@@ -7,6 +7,7 @@ import pygame
 from bullet import Bullet
 from alien import Alien
 from time import sleep
+import json
 
 
 def check_keydown_events(event, ai_settings, screen, ship, bullets):
@@ -45,7 +46,7 @@ def check_keyup_events(event, ship):
         ship.moving_backward = False
 
 
-def check_play_button(ai_settings, screen, stats, play_button, ship, aliens, bullets, mouse_x, mouse_y):
+def check_play_button(ai_settings, screen, stats, score_board, play_button, ship, aliens, bullets, mouse_x, mouse_y):
     """在玩家单击play按钮时开始新游戏"""
     button_clicked = play_button.rect.collidepoint(mouse_x, mouse_y)
     if button_clicked and not stats.game_active:
@@ -58,6 +59,13 @@ def check_play_button(ai_settings, screen, stats, play_button, ship, aliens, bul
         stats.reset_stats()
         stats.game_active = True
 
+        #重置记分牌图像
+        score_board.prep_score()
+        score_board.prep_high_score()
+        score_board.prep_level()
+        score_board.prep_ships()
+
+
         # 清空外星人和子弹列表
         aliens.empty()
         bullets.empty()
@@ -67,14 +75,15 @@ def check_play_button(ai_settings, screen, stats, play_button, ship, aliens, bul
         ship.center_ship()
 
 
-def check_events(ai_settings, screen, stats, play_button, ship, aliens, bullets):
+def check_events(ai_settings, screen, stats, score_board, play_button, ship, aliens, bullets):
     """响应按键和鼠标事件"""
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            stats.save_game_status()
             sys.exit()
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mouse_x, mouse_y = pygame.mouse.get_pos()
-            check_play_button(ai_settings, screen, stats, play_button, ship, aliens, bullets, mouse_x, mouse_y)
+            check_play_button(ai_settings, screen, stats, score_board, play_button, ship, aliens, bullets, mouse_x, mouse_y)
         elif event.type == pygame.KEYDOWN:
             # print("KEYDOWN: " + str(event.type))
             check_keydown_events(event, ai_settings, screen, ship, bullets)
@@ -97,15 +106,32 @@ def update_screen(ai_settings, stats, score_board, screen, ship, aliens, bullets
         play_button.draw_button()
 
 
-def check_bullet_alien_collisions(ai_settings, screen, ship, bullets, aliens):
+def check_high_score(stats, score_board):
+    """检查是否诞生了最高分"""
+    if stats.score > stats.high_score:
+        stats.high_score = stats.score
+        score_board.prep_high_score()
+
+
+def check_bullet_alien_collisions(ai_settings, screen, ship, bullets, aliens, stats, score_board):
     # 检查是否有子弹击中外星人
     # 如果有击中，删除相应的子弹和外星人
     collisions = pygame.sprite.groupcollide(bullets, aliens, True, True)
+    if collisions:
+        for aliens in collisions.values():
+            stats.score += ai_settings.alien_points * len(aliens)
+            score_board.prep_score()
+        check_high_score(stats, score_board)
 
     if len(aliens) == 0:
         # 删除所有子弹，并创建新的外星人编队
         bullets.empty()
         ai_settings.increase_speed()
+
+        #提高等级
+        stats.level += 1
+        score_board.prep_level()
+
         create_fleet(ai_settings, screen, ship, aliens)
 
 
@@ -116,13 +142,13 @@ def clear_bullets_out_of_screen(bullets):
             bullets.remove(bullet)
 
 
-def update_bullets(ai_settings, screen, ship, bullets, aliens):
+def update_bullets(ai_settings, screen, ship, bullets, aliens, stats, score_board):
     """更新bullets，并删除已消失的子弹"""
     bullets.update()
     # 删除消失的子弹
     clear_bullets_out_of_screen(bullets)
     # 删除碰撞的子弹及外星人，全部被消灭后重新生成
-    check_bullet_alien_collisions(ai_settings, screen, ship, bullets, aliens)
+    check_bullet_alien_collisions(ai_settings, screen, ship, bullets, aliens, stats, score_board)
 
 
 def fire_bullet(ai_settings, screen, ship, bullets):
@@ -188,11 +214,14 @@ def change_fleet_direction(ai_settings, aliens):
     ai_settings.fleet_direction *= -1
 
 
-def ship_hit(ai_settings, stats, screen, ship, bullets, aliens):
+def ship_hit(ai_settings, stats, score_board, screen, ship, bullets, aliens):
     """响应外星人撞到飞船"""
     if stats.ships_left > 0:
         # 将ship_left减1
         stats.ships_left -= 1
+
+        # 更新剩余飞船数
+        score_board.prep_ships()
 
         # 清空外星人列表和子弹列表
         aliens.empty()
@@ -210,23 +239,57 @@ def ship_hit(ai_settings, stats, screen, ship, bullets, aliens):
         pygame.mouse.set_visible(True)
 
 
-def check_aliens_bottom(ai_settings, stats, screen, ship, bullets, aliens):
+def check_aliens_bottom(ai_settings, stats, score_board, screen, ship, bullets, aliens):
     """检查是否有外星人到达了屏幕底部"""
     screen_rect = screen.get_rect()
     for alien in aliens.sprites():
         if alien.rect.bottom >= screen_rect.bottom:
             # 和飞船被撞一样处理
-            ship_hit(ai_settings, stats, screen, ship, bullets, aliens)
+            ship_hit(ai_settings, stats, score_board, screen, ship, bullets, aliens)
             break
 
 
-def update_aliens(ai_settings, stats, screen, ship, bullets, aliens):
+def update_aliens(ai_settings, stats, score_board, screen, ship, bullets, aliens):
     """检查是否外星人位于屏幕边缘,更新外星人群的位置"""
     check_fleet_edges(ai_settings, aliens)
     aliens.update()
     # 检测外星人和飞船之间的碰撞
     if pygame.sprite.spritecollideany(ship, aliens):
         print("Ship hit!!!")
-        ship_hit(ai_settings, stats, screen, ship, bullets, aliens)
+        ship_hit(ai_settings, stats, score_board, screen, ship, bullets, aliens)
     # 检测是否到达边缘
-    check_aliens_bottom(ai_settings, stats, screen, ship, bullets, aliens)
+    check_aliens_bottom(ai_settings, stats, score_board, screen, ship, bullets, aliens)
+
+
+def read_ini_file(filename):
+    """读取ini配置文件"""
+    try:
+        with open(filename) as file_obj:
+            init_props = json.load(file_obj)
+    except FileNotFoundError:
+        print("Sorry, the file " + filename + "does not exist.")
+    return init_props
+
+
+def write_ini_file(filename, content):
+    """读取ini配置文件"""
+    with open(filename, 'w') as file_obj:
+        json.dump(content, file_obj)
+
+
+# def load_high_score_from_ini_file(filename):
+#     """从配置文件获取最高分数"""
+#     init_props = read_ini_file(filename)
+#     high_score_saved = init_props['high_score']
+#     return high_score_saved
+#
+# def save_high_score_to_ini_file(stats):
+#     """存储当前最高分到文件"""
+
+
+if __name__ == '__main__':
+    # content = {'high_score': 600, 'player': 'william'}
+    filename = 'config/alien_invasion.ini'
+    # write_ini_file(filename, content)
+
+    print(read_ini_file(filename))

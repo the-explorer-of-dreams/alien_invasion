@@ -15,10 +15,12 @@ __author__ = 'william'
 
 import pygame
 from settings import Settings
+from pygame.sprite import Sprite
 
-class Ship:
+class Ship(Sprite):
     def __init__(self, screen):
         """初始化飞船并设置"""
+        super().__init__()
         self.screen = screen
         self.ai_settings = Settings()
 
